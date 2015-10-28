@@ -1,4 +1,3 @@
-
 # If not running interactively, don't do anything
 [ -z "$PS1" ] && return
 
@@ -21,59 +20,11 @@ shopt -s checkwinsize
 
 # Color prompt
 source ~/bin/color-names.sh
-source ~/bin/git-prompt.sh
-export PS1="\[$IPurple\]\$(__git_ps1) \[$Black\][\w]\[\033[0m\]\n\[$Black\][$USER@$HOSTNAME]$ \[$White\]"
+source ~/bin/.git-prompt.sh
+export PS1="\[$BIGreen\]\$(__git_ps1) \[$Yellow\][\w]\[\033[0m\]\n\
+\[$BIPurple\][$USER@$HOSTNAME]$ \[$ICyan\]"
 
 # Function definitions.
-
-SSH_ENV="$HOME/.ssh/environment"
-
-# start the ssh-agent
-function start_agent {
-    echo "Initializing new SSH agent..."
-    # spawn ssh-agent
-    ssh-agent | sed 's/^echo/#echo/' > "$SSH_ENV"
-    echo succeeded
-    chmod 600 "$SSH_ENV"
-    . "$SSH_ENV" > /dev/null
-    ssh-add
-}
-
-# test for identities
-function test_identities {
-    # test whether standard identities have been added to the agent already
-    ssh-add -l | grep "The agent has no identities" > /dev/null
-    if [ $? -eq 0 ]; then
-        ssh-add
-        # $SSH_AUTH_SOCK broken so we start a new proper agent
-        if [ $? -eq 2 ];then
-            start_agent
-        fi
-    fi
-}
-
-function start_ssh_agent_if_necessary {
-   # check for running ssh-agent with proper $SSH_AGENT_PID
-   if [ -n "$SSH_AGENT_PID" ]; then
-       ps -ef | grep "$SSH_AGENT_PID" | grep ssh-agent > /dev/null
-       if [ $? -eq 0 ]; then
-           test_identities
-       fi
-   # if $SSH_AGENT_PID is not properly set, we might be able to load one from
-   # $SSH_ENV
-   else
-       if [ -f "$SSH_ENV" ]; then
-           . "$SSH_ENV" > /dev/null
-       fi
-       ps -ef | grep "$SSH_AGENT_PID" | grep -v grep | grep ssh-agent > /dev/null
-       if [ $? -eq 0 ]; then
-           test_identities
-       else
-           start_agent
-       fi
-   fi
-}
-
 f_pushd() 
 {
     pushd $1 > /dev/null
@@ -106,63 +57,30 @@ alias 7="pd +7"
 alias 8="pd +8"
 alias 9="pd +9"
 alias hgr='history | grep'
-alias anaconda='source $HOME/apps/anaconda/bin/activate $HOME/apps/anaconda'
 
 export EDITOR='vim'
-export P4CONFIG=.p4config
 
-# Python Virtual Environments
-# Setting up the VirtualEnv
-export WORKON_HOME=$HOME/.virtualenvs
-export PIP_VIRTUALENV_BASE=$WORKON_HOME
-export PIP_RESPECT_VIRTUALENV=true
-export VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python
-export VIRTUALENVWRAPPER_VIRTUALENV=/usr/local/bin/virtualenv
-
-BREW_VIRTUALENVWRAPPER=/usr/local/bin/virtualenvwrapper.sh
-LINUX_VIRTUALENVWRAPPER=/usr/local/bin/virtualenvwrapper.sh
-
-# Detect the platform (similar to $OSTYPE)
-OS="`uname`"
-case $OS in
-  'Linux')
-    OS='Linux'
-    export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python
-    source $LINUX_VIRTUALENVWRAPPER
-    alias ls='ls -hFA --color=auto'
-    alias ll='ls -hlA --color=auto'
-    start_ssh_agent_if_necessary
-    # all completion
-    source /etc/bash_completion
-    ;;
-  'Darwin') 
-    OS='Mac'
-    export VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python2.7
-    source $BREW_VIRTUALENVWRAPPER
-    alias ls='ls -GFA'
-    alias ll='ls -GlA '
-    source /usr/local/etc/bash_completion
-#    for file in /usr/local/etc/bash_completion.d/* ; do
-#        source "$file"
-#    done
-    ;;
-esac
+alias ls='ls -hFA --color=auto'
+alias ll='ls -hlA --color=auto'
 
 # bash bookmarks
 source ~/bin/bashmarks.sh
 
-
 # completion
+source /etc/bash_completion
 if [ -e /etc/bash_completion.d/docker.io ]; then
     source /etc/bash_completion.d/docker.io
 fi
 source $HOME/.git-completion.bash
+
+# python virtualenvs
+if [ -e /usr/local/bin/virtualenvwrapper.sh ]; then
+    source /usr/local/bin/virtualenvwrapper.sh
+fi
 
 #local stuff
 if [ -e "$HOME/.bashrc.local" ]; then
         source "$HOME/.bashrc.local"
 fi
 
-export PATH=$HOME/localbin:$HOME/bin:/opt/local/bin:/usr/local/sbin:/usr/local/bin:/usr/local/share/python:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:$EC2_BASE/bin
-
-
+export PATH=$HOME/bin:/opt/local/bin:/usr/local/sbin:/usr/local/bin:/usr/local/share/python:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games
